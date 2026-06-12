@@ -1,4 +1,4 @@
-name: Auto Pull Request to Master
+name: Auto Pull Request to Main
 
 on:
   push:
@@ -21,9 +21,9 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: staging
-          base: master
-          title: "Promote staging changes to master"
-          body: "This is an automatic Pull Request created when changes were pushed to the staging branch. Review the changes before merging to master."
+          base: main
+          title: "Promote staging changes to main"
+          body: "This is an automatic Pull Request created when changes were pushed to the staging branch. Review the changes before merging to main."
           labels: |
             auto-pr
             staging
