@@ -1,0 +1,839 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Mundial | Sports Tracker{% endblock %}
+
+{% block content %}
+<!-- Header and Controls -->
+<header class="controls-container" id="mundial_header" style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #ffffff, #9ca3af); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            <i class="fa-solid fa-earth-americas" style="color: var(--accent); margin-right: 0.5rem;"></i> Mundial 2026
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Simulador y seguidor de grupos del mundial</p>
+    </div>
+    
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+        {% if user.is_staff %}
+        <a href="{% url 'populate_worldcup' %}" class="filter-btn" style="background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.35); color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; text-decoration: none; cursor: pointer;" onclick="return confirm('¿Deseas inicializar los 12 grupos y 48 equipos de la Copa Mundial 2026? Esto reiniciará las tablas y simulaciones actuales.');">
+            <i class="fa-solid fa-rotate"></i> Inicializar Grupos
+        </a>
+        <button class="filter-btn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" id="btn_open_group_modal">
+            <i class="fa-solid fa-folder-plus"></i> Nuevo Grupo
+        </button>
+        <button class="filter-btn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" id="btn_open_team_modal">
+            <i class="fa-solid fa-user-plus"></i> Agregar Equipo
+        </button>
+        <button class="filter-btn active" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" id="btn_open_match_modal">
+            <i class="fa-solid fa-circle-plus"></i> Registrar Partido
+        </button>
+        {% else %}
+        <span style="font-size: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 0.4rem 0.8rem; border-radius: 8px; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-eye"></i> Vista de Lector (Solo Lectura)
+        </span>
+        {% endif %}
+    </div>
+</header>
+
+{% if groups.exists %}
+<!-- Tabs Navigation -->
+<div class="tabs-container" style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+    <button class="tab-btn active" onclick="switchTab('groups-tab')" id="btn_groups_tab">
+        <i class="fa-solid fa-circle-nodes" style="margin-right: 0.5rem;"></i> Fase de Grupos
+    </button>
+    <button class="tab-btn" onclick="switchTab('finals-tab')" id="btn_finals_tab">
+        <i class="fa-solid fa-sitemap" style="margin-right: 0.5rem;"></i> Eliminación Directa
+    </button>
+</div>
+{% endif %}
+
+<!-- Tab 1: Groups Grid -->
+{% if groups_data %}
+<div class="tab-content active" id="groups-tab">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); gap: 2rem;" id="groups_grid">
+    {% for gd in groups_data %}
+    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1.5rem;" id="group_card_{{ gd.group.id }}">
+        
+        <!-- Group Title with Admin Actions -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 0.75rem;">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-trophy" style="color: var(--accent);"></i> {{ gd.group.name }}
+            </h2>
+            {% if user.is_staff %}
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="btn-action" title="Editar Nombre del Grupo" onclick="openEditGroupModal('{{ gd.group.id }}', '{{ gd.group.name|escapejs }}')" type="button">
+                    <i class="fa-solid fa-pen" style="font-size: 0.85rem;"></i>
+                </button>
+                <a href="{% url 'delete_group' gd.group.id %}" class="btn-delete" title="Eliminar Grupo" onclick="return confirm('¿Deseas eliminar este grupo, junto con sus equipos y partidos relacionados?');" id="btn_delete_group_{{ gd.group.id }}">
+                    <i class="fa-solid fa-trash-can" style="font-size: 0.85rem;"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Standings Table -->
+        <div style="overflow-x: auto; width: 100%;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); font-weight: 600;">
+                        <th style="padding: 0.75rem 0.5rem; width: 40px; text-align: center;">Pos</th>
+                        <th style="padding: 0.75rem 0.5rem; min-width: 150px;">Equipo</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">PJ</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">G</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">E</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">P</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GF</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GC</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">DG</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px; font-weight: 700;">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in gd.teams %}
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: var(--transition-smooth); background: rgba(255,255,255,0.01);" 
+                        {% if forloop.counter <= 2 %}class="qualified-row"{% endif %} 
+                        id="team_row_{{ team.id }}">
+                        <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--text-secondary);">
+                            {{ forloop.counter }}
+                        </td>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.25rem;">{{ team.flag }}</span>
+                            <span>{{ team.name }}</span>
+                        </td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.games_played }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.wins }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.draws }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.losses }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_for }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_against }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; {% if team.goal_difference > 0 %}color: #34d399;{% elif team.goal_difference < 0 %}color: #f87171;{% endif %}">
+                            {% if team.goal_difference > 0 %}+{% endif %}{{ team.goal_difference }}
+                        </td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 800; color: var(--text-primary);">{{ team.points }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Group Matches Sub-section -->
+        <div style="margin-top: 1rem;">
+            <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-calendar-days"></i> Partidos del {{ gd.group.name }}
+            </h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;" id="group_{{ gd.group.id }}_matches">
+                {% for m in gd.matches %}
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem;" id="group_match_{{ m.id }}">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; justify-content: flex-end; text-align: right;">
+                        <span style="font-weight: 600;">{{ m.home_team.name }}</span>
+                        <span style="font-size: 1.1rem;">{{ m.home_team.flag }}</span>
+                    </div>
+                    
+                    {% if m.played %}
+                    <div style="font-weight: 800; font-size: 1rem; padding: 0 1rem; min-width: 100px; text-align: center; color: var(--text-primary);">
+                        {{ m.home_score }} - {{ m.away_score }}
+                        <div style="font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-top: 0.1rem;">{{ m.date|date:"d/m/Y" }}</div>
+                    </div>
+                    {% else %}
+                    <div style="font-weight: 600; font-size: 0.85rem; padding: 0 1rem; min-width: 100px; text-align: center; color: var(--text-secondary);">
+                        vs
+                        <div style="font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-top: 0.1rem;">{{ m.date|date:"d/m/Y" }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; justify-content: flex-start; text-align: left;">
+                        <span style="font-size: 1.1rem;">{{ m.away_team.flag }}</span>
+                        <span style="font-weight: 600;">{{ m.away_team.name }}</span>
+                    </div>
+                    
+                    <!-- Admin modification actions -->
+                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                        {% if user.is_staff %}
+                        <button class="btn-action" title="Registrar/Editar Resultado" onclick="openUpdateScoreModal('{{ m.id }}', '{{ m.home_team.name|escapejs }}', '{{ m.away_team.name|escapejs }}', '{{ m.home_score }}', '{{ m.away_score }}')" type="button">
+                            <i class="fa-solid fa-pen-to-square" style="font-size: 0.85rem;"></i>
+                        </button>
+                        <a href="{% url 'delete_group_match' m.id %}" class="btn-delete" title="Eliminar partido de grupo" onclick="return confirm('¿Deseas eliminar este partido de grupo?');" id="btn_delete_group_match_{{ m.id }}">
+                            <i class="fa-solid fa-trash" style="font-size: 0.85rem;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1rem; border: 1px dashed rgba(255,255,255,0.05); border-radius: 8px;">
+                    No se han registrado partidos aún en este grupo.
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</div> <!-- ends groups-tab -->
+{% endif %}
+
+<!-- Tab 2: Direct Elimination Content -->
+<div class="tab-content" id="finals-tab">
+{% if show_qualifiers %}
+
+    <!-- Champion Celebration Card -->
+    {% if champion %}
+    <div class="glass-card champion-card" style="margin-bottom: 2rem; text-align: center; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(17, 24, 39, 0.8)); border: 1.5px solid var(--accent); padding: 2.5rem; position: relative; overflow: hidden; animation: pulse 2.5s infinite; border-radius: 20px;">
+        <i class="fa-solid fa-trophy" style="font-size: 4rem; color: #fbbf24; margin-bottom: 1rem; filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.6));"></i>
+        <h2 style="font-size: 2.25rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">
+            🏆 ¡{{ champion.name }} es el Campeón del Mundo!
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+            Felicitaciones al seleccionado de <span style="font-size: 1.6rem; vertical-align: middle;">{{ champion.flag }}</span> <strong>{{ champion.name }}</strong> por coronarse campeón en la simulación de la Copa Mundial 2026.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Header Stats Summary -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+        <div class="glass-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <i class="fa-solid fa-ranking-star" style="font-size: 2rem; color: var(--accent);"></i>
+            <div>
+                <h4 style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Fase Clasificatoria</h4>
+                <p style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">32 Selecciones Definidas</p>
+            </div>
+        </div>
+        <div class="glass-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <i class="fa-solid fa-chart-line" style="font-size: 2rem; color: var(--success);"></i>
+            <div>
+                <h4 style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Progreso Llaves</h4>
+                <p style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ played_ko_count }} de 31 partidos jugados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Knockout Round Navigation Pills -->
+    <div class="round-nav" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; background: rgba(255, 255, 255, 0.02); padding: 0.35rem; border-radius: 12px; border: 1px solid var(--border-color);">
+        <button class="filter-btn active" onclick="switchKORound('R32')" id="btn_ko_R32" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+            Dieciseisavos (16)
+        </button>
+        <button class="filter-btn" onclick="switchKORound('R16')" id="btn_ko_R16" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+            Octavos (8)
+        </button>
+        <button class="filter-btn" onclick="switchKORound('QF')" id="btn_ko_QF" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+            Cuartos (4)
+        </button>
+        <button class="filter-btn" onclick="switchKORound('SF')" id="btn_ko_SF" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+            Semifinales (2)
+        </button>
+        <button class="filter-btn" onclick="switchKORound('F')" id="btn_ko_F" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+            Gran Final (1)
+        </button>
+    </div>
+
+    <!-- Knockout Match Grid Lists -->
+    <!-- Round of 32 -->
+    <div class="ko-round-pane active" id="pane_R32" style="animation: fadeIn 0.4s ease-out;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+            {% for m in r32_matches %}
+                {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Dieciseisavos - M" %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Round of 16 -->
+    <div class="ko-round-pane" id="pane_R16" style="display: none; animation: fadeIn 0.4s ease-out;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+            {% for m in r16_matches %}
+                {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Octavos - M" %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Quarter Finals -->
+    <div class="ko-round-pane" id="pane_QF" style="display: none; animation: fadeIn 0.4s ease-out;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+            {% for m in qf_matches %}
+                {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Cuartos - M" %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Semifinals -->
+    <div class="ko-round-pane" id="pane_SF" style="display: none; animation: fadeIn 0.4s ease-out;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+            {% for m in sf_matches %}
+                {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Semifinal " %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Final -->
+    <div class="ko-round-pane" id="pane_F" style="display: none; animation: fadeIn 0.4s ease-out; padding: 1.5rem 0;">
+        <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+            <div style="width: 100%; max-width: 440px;">
+                {% if final_match %}
+                    {% include 'tracker/partials/knockout_match_card.html' with match=final_match match_label="Gran Final" is_final_card=True %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Thirds & Qualified List Drawer (Expandable reference) -->
+    <div style="margin-top: 3rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 2rem;">
+        <button class="filter-btn" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-radius: 12px; cursor: pointer; text-align: left;" onclick="toggleDrawer('thirds_drawer')" type="button">
+            <span style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-list-ol"></i> Ver Tabla de Mejores Terceros y Clasificados (32)</span>
+            <i class="fa-solid fa-chevron-down" id="thirds_drawer_icon" style="transition: var(--transition-smooth);"></i>
+        </button>
+        
+        <div id="thirds_drawer" style="display: none; margin-top: 1.5rem; animation: fadeIn 0.3s ease-out;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+                
+                <!-- Best Thirds Card -->
+                <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0;">Tabla de Mejores Terceros</h3>
+                    <div style="overflow-x: auto; width: 100%;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary);">
+                                    <th style="padding: 0.5rem; text-align: center;">Pos</th>
+                                    <th style="padding: 0.5rem;">Grupo</th>
+                                    <th style="padding: 0.5rem;">Equipo</th>
+                                    <th style="padding: 0.5rem; text-align: center;">PJ</th>
+                                    <th style="padding: 0.5rem; text-align: center;">Pts</th>
+                                    <th style="padding: 0.5rem; text-align: center;">DG</th>
+                                    <th style="padding: 0.5rem; text-align: center;">GF</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for team in mejores_terceros %}
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);" {% if team.is_qualified_third %}class="qualified-row" style="border-left: 2px solid var(--success) !important; background: rgba(16, 185, 129, 0.02) !important;"{% endif %}>
+                                    <td style="padding: 0.5rem; text-align: center;">{{ forloop.counter }}</td>
+                                    <td style="padding: 0.5rem; color: var(--accent); font-weight: 600;">{{ team.group.name|slice:"6:" }}</td>
+                                    <td style="padding: 0.5rem; font-weight: 600;">{{ team.flag }} {{ team.name }}</td>
+                                    <td style="padding: 0.5rem; text-align: center;">{{ team.games_played }}</td>
+                                    <td style="padding: 0.5rem; text-align: center; font-weight: 700;">{{ team.points }}</td>
+                                    <td style="padding: 0.5rem; text-align: center;">{{ team.goal_difference }}</td>
+                                    <td style="padding: 0.5rem; text-align: center;">{{ team.goals_for }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Qualified 32 List -->
+                <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0;">Clasificados Oficiales (32)</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;">
+                        {% for team in clasificados_32 %}
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); padding: 0.4rem 0.6rem; border-radius: 8px; font-size: 0.8rem;">
+                            <span style="font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="{{ team.name }}">{{ team.flag }} {{ team.name }}</span>
+                            <span style="font-size: 0.65rem; background: var(--accent); padding: 0.05rem 0.2rem; border-radius: 4px; color: white;">{{ team.group.name|slice:"6:" }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Reset Action Button for Admins -->
+    {% if user.is_staff %}
+    <div style="margin-top: 3rem; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1.5rem;">
+        <a href="{% url 'reset_knockout_bracket' %}" class="filter-btn" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; font-weight: 600;" onclick="return confirm('¿Deseas reiniciar por completo toda la fase de eliminación directa? Se perderán todos los marcadores y avances.');">
+            <i class="fa-solid fa-trash-arrow-up"></i> Reiniciar Fase Eliminatoria
+        </a>
+    </div>
+    {% endif %}
+
+{% elif groups.exists %}
+    <!-- Info Banner when matches are pending -->
+    <section style="margin-top: 3rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 2.5rem; text-align: center;" id="finals_pending_section">
+        <div class="glass-card" style="padding: 2.5rem; max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+            <i class="fa-solid fa-lock" style="font-size: 2.5rem; color: var(--accent); opacity: 0.8; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));"></i>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0;">Fase Final en Espera</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 550px; margin: 0;">
+                Los clasificados a dieciseisavos de final y la tabla de mejores terceros se mostrarán automáticamente una vez que se registren y jueguen todos los partidos de la fase de grupos.
+            </p>
+            {% if total_matches > 0 %}
+            <div style="font-size: 0.8rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.4rem 1rem; border-radius: 20px; color: var(--text-secondary); margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; animation: pulse 2s infinite;"></span>
+                Progreso: <strong>{{ played_matches }}</strong> de <strong>{{ total_matches }}</strong> partidos jugados.
+            </div>
+            {% endif %}
+        </div>
+    </section>
+{% endif %}
+</div> <!-- ends finals-tab -->
+
+{% if not groups_data and not groups.exists %}
+<div class="glass-card empty-state" id="empty_groups_state" style="padding: 4rem 2rem; text-align: center;">
+    <i class="fa-solid fa-folder-open" style="font-size: 3.5rem; color: var(--text-muted); margin-bottom: 1.5rem;"></i>
+    <h2 style="color: var(--text-primary); font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Sin grupos registrados</h2>
+    <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 1.5rem auto;">
+        Aún no hay grupos creados para el mundial. {% if user.is_staff %}Puedes inicializarlos con el botón de la cabecera o crearlos manualmente.{% else %}Inicia sesión como administrador para inicializar o registrar la Copa Mundial.{% endif %}
+    </p>
+</div>
+{% endif %}
+
+<!-- ADMIN MODALS SECTION -->
+{% if user.is_staff %}
+<!-- Modal 1: Nuevo Grupo -->
+<div class="modal-overlay" id="group_modal_overlay">
+    <div class="glass-card modal-card" id="group_modal_card">
+        <div class="modal-header">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-folder-plus" style="color: var(--accent);"></i> Nuevo Grupo
+            </h2>
+            <button class="btn-close-modal" id="btn_close_group_modal" type="button" aria-label="Cerrar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'add_group' %}" id="group_form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ group_form.name.id_for_label }}" class="form-label">Nombre del Grupo</label>
+                {{ group_form.name }}
+            </div>
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Grupo
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 2: Agregar Equipo -->
+<div class="modal-overlay" id="team_modal_overlay">
+    <div class="glass-card modal-card" id="team_modal_card">
+        <div class="modal-header">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-user-plus" style="color: var(--accent);"></i> Agregar Equipo a Grupo
+            </h2>
+            <button class="btn-close-modal" id="btn_close_team_modal" type="button" aria-label="Cerrar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'add_group_team' %}" id="team_form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ team_form.group.id_for_label }}" class="form-label">Grupo</label>
+                {{ team_form.group }}
+            </div>
+            <div class="form-group">
+                <label for="{{ team_form.name.id_for_label }}" class="form-label">Nombre del Equipo</label>
+                {{ team_form.name }}
+            </div>
+            <div class="form-group">
+                <label for="{{ team_form.flag.id_for_label }}" class="form-label">Bandera (Emoji)</label>
+                {{ team_form.flag }}
+            </div>
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Equipo
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 3: Registrar Partido -->
+<div class="modal-overlay" id="match_modal_overlay">
+    <div class="glass-card modal-card" id="match_modal_card">
+        <div class="modal-header">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-circle-plus" style="color: var(--accent);"></i> Registrar Partido de Grupo
+            </h2>
+            <button class="btn-close-modal" id="btn_close_match_modal" type="button" aria-label="Cerrar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'add_group_match' %}" id="group_match_form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ match_form.group.id_for_label }}" class="form-label">Grupo</label>
+                {{ match_form.group }}
+            </div>
+            
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="{{ match_form.home_team.id_for_label }}" class="form-label">Equipo Local</label>
+                    {{ match_form.home_team }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ match_form.away_team.id_for_label }}" class="form-label">Equipo Visitante</label>
+                    {{ match_form.away_team }}
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="{{ match_form.date.id_for_label }}" class="form-label">Fecha del Partido</label>
+                {{ match_form.date }}
+            </div>
+            
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Partido
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 4: Editar Grupo -->
+<div class="modal-overlay" id="edit_group_modal_overlay">
+    <div class="glass-card modal-card" id="edit_group_modal_card">
+        <div class="modal-header">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-pen" style="color: var(--accent);"></i> Editar Nombre de Grupo
+            </h2>
+            <button class="btn-close-modal" id="btn_close_edit_group_modal" type="button" aria-label="Cerrar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form method="POST" action="" id="edit_group_form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_edit_group_name" class="form-label">Nombre del Grupo</label>
+                <input type="text" name="name" class="form-input premium-input" id="id_edit_group_name" required>
+            </div>
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-floppy-disk"></i> Actualizar Grupo
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 5: Registrar/Actualizar Resultado Partido de Grupo -->
+<div class="modal-overlay" id="update_score_modal_overlay">
+    <div class="glass-card modal-card" id="update_score_modal_card">
+        <div class="modal-header">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-square-poll-horizontal" style="color: var(--accent);"></i> Registrar Resultado de Grupo
+            </h2>
+            <button class="btn-close-modal" id="btn_close_update_score_modal" type="button" aria-label="Cerrar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form method="POST" action="" id="update_score_form">
+            {% csrf_token %}
+            
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="team-col-group" style="display: flex; flex-direction: column; gap: 0.5rem; text-align: center;">
+                    <span id="update_home_team_name" style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">Equipo Local</span>
+                    <div class="form-group">
+                        <label for="id_update_home_score" class="form-label">Goles Local</label>
+                        <input type="number" name="home_score" class="form-input premium-input score-input" min="0" placeholder="0" id="id_update_home_score" required style="width: 100%; text-align: center; font-size: 1.25rem; font-weight: 700;">
+                    </div>
+                </div>
+                
+                <div class="team-col-group" style="display: flex; flex-direction: column; gap: 0.5rem; text-align: center;">
+                    <span id="update_away_team_name" style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">Equipo Visitante</span>
+                    <div class="form-group">
+                        <label for="id_update_away_score" class="form-label">Goles Visitante</label>
+                        <input type="number" name="away_score" class="form-input premium-input score-input" min="0" placeholder="0" id="id_update_away_score" required style="width: 100%; text-align: center; font-size: 1.25rem; font-weight: 700;">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-circle-check"></i> Guardar Resultado
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal 6: Registrar/Actualizar Marcador Eliminatoria (Knockout) -->
+<div class="modal-overlay" id="update_ko_score_modal_overlay">
+    <div class="glass-card modal-card" id="update_ko_score_modal_card">
+        <div class="modal-header">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-square-poll-horizontal" style="color: var(--accent);"></i> Registrar Marcador Fase Final
+            </h2>
+            <button class="btn-close-modal" id="btn_close_update_ko_score_modal" type="button" aria-label="Cerrar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form method="POST" action="" id="update_ko_score_form">
+            {% csrf_token %}
+            
+            <!-- Scores row -->
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem;">
+                <div class="team-col-group" style="display: flex; flex-direction: column; gap: 0.5rem; text-align: center;">
+                    <span id="update_ko_home_team_name" style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">Local</span>
+                    <div class="form-group">
+                        <label for="id_ko_home_score" class="form-label">Goles Local</label>
+                        <input type="number" name="home_score" class="form-input premium-input score-input" min="0" placeholder="0" id="id_ko_home_score" required style="width: 100%; text-align: center; font-size: 1.25rem; font-weight: 700;">
+                    </div>
+                </div>
+                
+                <div class="team-col-group" style="display: flex; flex-direction: column; gap: 0.5rem; text-align: center;">
+                    <span id="update_ko_away_team_name" style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">Visitante</span>
+                    <div class="form-group">
+                        <label for="id_ko_away_score" class="form-label">Goles Visitante</label>
+                        <input type="number" name="away_score" class="form-input premium-input score-input" min="0" placeholder="0" id="id_ko_away_score" required style="width: 100%; text-align: center; font-size: 1.25rem; font-weight: 700;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Penalties shootout section (Hidden unless tie score) -->
+            <div id="ko_penalties_section" style="display: none; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; animation: slideDown 0.3s ease-out;">
+                <span style="font-weight: 700; color: var(--accent); display: block; text-align: center; margin-bottom: 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ⚡ Empate detectado: Tanda de Penaltis obligatoria
+                </span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="id_ko_home_penalties" class="form-label" style="text-align: center;">Penaltis Local</label>
+                        <input type="number" name="home_penalties" class="form-input premium-input score-input" min="0" placeholder="0" id="id_ko_home_penalties" style="text-align: center; font-weight: 700;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="id_ko_away_penalties" class="form-label" style="text-align: center;">Penaltis Visitante</label>
+                        <input type="number" name="away_penalties" class="form-input premium-input score-input" min="0" placeholder="0" id="id_ko_away_penalties" style="text-align: center; font-weight: 700;">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-circle-check"></i> Guardar Marcador
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Render Teams Data Mapping for Javascript Filtering (Admin Only) -->
+{% if user.is_staff %}
+<script id="teams-data" type="application/json">
+{
+    {% for group in groups %}
+    "{{ group.id }}": [
+        {% for team in group.teams.all %}
+        {"id": "{{ team.id }}", "name": "{{ team.flag }} {{ team.name }}"}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+}
+</script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Dynamic Dropdown Filtering logic (Admin Only)
+    const groupSelect = document.getElementById('id_match_group');
+    const homeSelect = document.getElementById('id_match_home_team');
+    const awaySelect = document.getElementById('id_match_away_team');
+    
+    // Parse team data safely
+    let teamsByGroup = {};
+    const teamsDataEl = document.getElementById('teams-data');
+    if (teamsDataEl) {
+        try {
+            teamsByGroup = JSON.parse(teamsDataEl.textContent);
+        } catch (e) {
+            console.error("Error parsing teams-data JSON:", e);
+        }
+    }
+
+    function updateTeamDropdowns() {
+        const selectedGroup = groupSelect.value;
+        const teams = teamsByGroup[selectedGroup] || [];
+
+        // Clear existing choices
+        homeSelect.innerHTML = '<option value="">---------</option>';
+        awaySelect.innerHTML = '<option value="">---------</option>';
+
+        // Populate selected teams
+        teams.forEach(team => {
+            const optHome = document.createElement('option');
+            optHome.value = team.id;
+            optHome.textContent = team.name;
+            homeSelect.appendChild(optHome);
+
+            const optAway = document.createElement('option');
+            optAway.value = team.id;
+            optAway.textContent = team.name;
+            awaySelect.appendChild(optAway);
+        });
+    }
+
+    if (groupSelect && homeSelect && awaySelect) {
+        groupSelect.addEventListener('change', updateTeamDropdowns);
+        if (groupSelect.value) {
+            updateTeamDropdowns();
+        }
+    }
+
+    // Modal Control Setup Helper
+    function configureModal(openBtnId, modalId, closeBtnId) {
+        const openBtn = document.getElementById(openBtnId);
+        const modal = document.getElementById(modalId);
+        const closeBtn = document.getElementById(closeBtnId);
+
+        if (openBtn && modal) {
+            openBtn.addEventListener('click', () => modal.classList.add('active'));
+        }
+        if (closeBtn && modal) {
+            closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        }
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    // Update Group Match Score Modal
+    window.openUpdateScoreModal = function(matchId, homeTeam, awayTeam, homeScore, awayScore) {
+        const form = document.getElementById('update_score_form');
+        if (form) {
+            form.action = `/mundial/match/update/${matchId}/`;
+            document.getElementById('update_home_team_name').textContent = homeTeam;
+            document.getElementById('update_away_team_name').textContent = awayTeam;
+            document.getElementById('id_update_home_score').value = homeScore;
+            document.getElementById('id_update_away_score').value = awayScore;
+            document.getElementById('update_score_modal_overlay').classList.add('active');
+        }
+    };
+
+    const closeUpdateModal = document.getElementById('btn_close_update_score_modal');
+    const updateOverlay = document.getElementById('update_score_modal_overlay');
+    if (closeUpdateModal && updateOverlay) {
+        closeUpdateModal.addEventListener('click', () => updateOverlay.classList.remove('active'));
+    }
+    if (updateOverlay) {
+        updateOverlay.addEventListener('click', (e) => {
+            if (e.target === updateOverlay) {
+                updateOverlay.classList.remove('active');
+            }
+        });
+    }
+
+    // Edit Group Modal
+    window.openEditGroupModal = function(groupId, groupName) {
+        const form = document.getElementById('edit_group_form');
+        if (form) {
+            form.action = `/mundial/group/edit/${groupId}/`;
+            document.getElementById('id_edit_group_name').value = groupName;
+            document.getElementById('edit_group_modal_overlay').classList.add('active');
+        }
+    };
+
+    // Update Knockout Match Score Modal
+    window.openKnockoutScoreModal = function(matchId, homeTeam, awayTeam, homeScore, awayScore, homePen, awayPen) {
+        const form = document.getElementById('update_ko_score_form');
+        if (form) {
+            form.action = `/mundial/knockout/update/${matchId}/`;
+            document.getElementById('update_ko_home_team_name').textContent = homeTeam;
+            document.getElementById('update_ko_away_team_name').textContent = awayTeam;
+            
+            const homeScoreInput = document.getElementById('id_ko_home_score');
+            const awayScoreInput = document.getElementById('id_ko_away_score');
+            
+            homeScoreInput.value = homeScore;
+            awayScoreInput.value = awayScore;
+            
+            const homePenInput = document.getElementById('id_ko_home_penalties');
+            const awayPenInput = document.getElementById('id_ko_away_penalties');
+            
+            homePenInput.value = homePen;
+            awayPenInput.value = awayPen;
+            
+            // Toggle penalty section immediately
+            checkKOTieScore();
+            
+            document.getElementById('update_ko_score_modal_overlay').classList.add('active');
+        }
+    };
+
+    const closeKODialog = document.getElementById('btn_close_update_ko_score_modal');
+    const koOverlay = document.getElementById('update_ko_score_modal_overlay');
+    if (closeKODialog && koOverlay) {
+        closeKODialog.addEventListener('click', () => koOverlay.classList.remove('active'));
+    }
+    if (koOverlay) {
+        koOverlay.addEventListener('click', (e) => {
+            if (e.target === koOverlay) {
+                koOverlay.classList.remove('active');
+            }
+        });
+    }
+
+    // Dynamic tie detection in Knockout modal
+    const koHomeInput = document.getElementById('id_ko_home_score');
+    const koAwayInput = document.getElementById('id_ko_away_score');
+    const koPenSection = document.getElementById('ko_penalties_section');
+    const koHomePenInput = document.getElementById('id_ko_home_penalties');
+    const koAwayPenInput = document.getElementById('id_ko_away_penalties');
+
+    function checkKOTieScore() {
+        if (koHomeInput && koAwayInput && koPenSection) {
+            const valHome = koHomeInput.value.trim();
+            const valAway = koAwayInput.value.trim();
+            
+            if (valHome !== "" && valAway !== "" && parseInt(valHome) === parseInt(valAway)) {
+                koPenSection.style.display = 'block';
+                koHomePenInput.setAttribute('required', 'required');
+                koAwayPenInput.setAttribute('required', 'required');
+            } else {
+                koPenSection.style.display = 'none';
+                koHomePenInput.removeAttribute('required');
+                koAwayPenInput.removeAttribute('required');
+            }
+        }
+    }
+
+    if (koHomeInput && koAwayInput) {
+        koHomeInput.addEventListener('input', checkKOTieScore);
+        koAwayInput.addEventListener('input', checkKOTieScore);
+    }
+
+    // Main Tab Switcher
+    window.switchTab = function(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        const target = document.getElementById(tabId);
+        if (target) {
+            target.classList.add('active');
+        }
+        
+        if (tabId === 'groups-tab') {
+            document.getElementById('btn_groups_tab').classList.add('active');
+        } else if (tabId === 'finals-tab') {
+            document.getElementById('btn_finals_tab').classList.add('active');
+        }
+    };
+
+    // Knockout Round Switcher
+    window.switchKORound = function(roundCode) {
+        document.querySelectorAll('.ko-round-pane').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.round-nav .filter-btn').forEach(btn => btn.classList.remove('active'));
+        
+        const targetPane = document.getElementById('pane_' + roundCode);
+        if (targetPane) {
+            targetPane.style.display = 'block';
+        }
+        
+        const targetBtn = document.getElementById('btn_ko_' + roundCode);
+        if (targetBtn) {
+            targetBtn.classList.add('active');
+        }
+    };
+
+    // Drawer Toggler for Qualified Teams List
+    window.toggleDrawer = function(drawerId) {
+        const drawer = document.getElementById(drawerId);
+        const icon = document.getElementById(drawerId + '_icon');
+        if (drawer) {
+            if (drawer.style.display === 'none') {
+                drawer.style.display = 'block';
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            } else {
+                drawer.style.display = 'none';
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            }
+        }
+    };
+
+    // Setup group creation / team adding modals
+    configureModal('btn_open_group_modal', 'group_modal_overlay', 'btn_close_group_modal');
+    configureModal('btn_open_team_modal', 'team_modal_overlay', 'btn_close_team_modal');
+    configureModal('btn_open_match_modal', 'match_modal_overlay', 'btn_close_match_modal');
+    configureModal(null, 'edit_group_modal_overlay', 'btn_close_edit_group_modal');
+});
+</script>
+{% endblock %}

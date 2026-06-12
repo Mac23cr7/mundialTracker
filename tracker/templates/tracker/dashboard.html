@@ -1,0 +1,241 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Dashboard | Sports Tracker{% endblock %}
+
+{% block content %}
+<!-- Quick Stats Container -->
+<section class="stats-container" id="stats_container">
+    <div class="glass-card stat-card total" id="stat_total">
+        <div class="stat-label">
+            <i class="fa-solid fa-chart-simple"></i> Total Partidos
+        </div>
+        <div class="stat-value">{{ total_matches }}</div>
+        <div class="stat-detail">Registrados en la plataforma</div>
+    </div>
+    <div class="glass-card stat-card football" id="stat_football">
+        <div class="stat-label">
+            <i class="fa-solid fa-futbol"></i> Fútbol
+        </div>
+        <div class="stat-value">{{ football_count }}</div>
+        <div class="stat-detail">Partidos jugados</div>
+    </div>
+    <div class="glass-card stat-card basketball" id="stat_basketball">
+        <div class="stat-label">
+            <i class="fa-solid fa-basketball"></i> Básquetbol
+        </div>
+        <div class="stat-value">{{ basketball_count }}</div>
+        <div class="stat-detail">Partidos jugados</div>
+    </div>
+    <div class="glass-card stat-card active-team" id="stat_active">
+        <div class="stat-label">
+            <i class="fa-solid fa-trophy"></i> Equipo Más Activo
+        </div>
+        {% if most_active_team != "Ninguno" %}
+        <a href="{% url 'team_detail' most_active_team %}" class="stat-value" style="font-size: 1.5rem; text-decoration: none; display: block; color: var(--text-primary); transition: var(--transition-smooth);" id="active_team_link">
+            {{ most_active_team }}
+        </a>
+        <div class="stat-detail">{{ most_active_count }} partidos disputados</div>
+        {% else %}
+        <div class="stat-value" style="font-size: 1.5rem;">{{ most_active_team }}</div>
+        <div class="stat-detail">Sin partidos registrados</div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Dashboard Main Layout Grid -->
+<div class="dashboard-grid">
+    <!-- Sidebar: Sports Filter & Add Match Button -->
+    <aside class="sidebar-container" id="sidebar_container">
+        <!-- Sports Filter Card -->
+        <div class="glass-card" id="sports_filter_sidebar">
+            <h2 class="card-title">
+                <i class="fa-solid fa-gamepad" style="color: var(--accent);"></i> Deportes
+            </h2>
+            <div class="sidebar-filter-list">
+                <a href="?sport=ALL{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="sidebar-filter-btn {% if sport_filter == 'ALL' %}active{% endif %}" 
+                   id="sidebar_filter_all">
+                    <span class="filter-btn-content">
+                        <i class="fa-solid fa-border-all"></i>
+                        <span>Todos</span>
+                    </span>
+                    <span class="sport-badge all">{{ total_matches }}</span>
+                </a>
+                <a href="?sport=FB{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="sidebar-filter-btn {% if sport_filter == 'FB' %}active{% endif %}" 
+                   id="sidebar_filter_football">
+                    <span class="filter-btn-content">
+                        <i class="fa-solid fa-futbol"></i>
+                        <span>Fútbol</span>
+                    </span>
+                    <span class="sport-badge football">{{ football_count }}</span>
+                </a>
+                <a href="?sport=BK{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="sidebar-filter-btn {% if sport_filter == 'BK' %}active{% endif %}" 
+                   id="sidebar_filter_basketball">
+                    <span class="filter-btn-content">
+                        <i class="fa-solid fa-basketball"></i>
+                        <span>Básquetbol</span>
+                    </span>
+                    <span class="sport-badge basketball">{{ basketball_count }}</span>
+                </a>
+            </div>
+            
+            {% if user.is_staff %}
+            <button class="btn-submit" id="btn_open_modal" style="margin-top: 1.5rem; width: 100%;" type="button">
+                <i class="fa-solid fa-circle-plus"></i> Registrar Partido
+            </button>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- Main Content Area: Matches Grid -->
+    <section>
+        <!-- Search Controls -->
+        <div class="controls-container" id="controls_container" style="justify-content: flex-end;">
+            <!-- Search Form -->
+            <form method="GET" class="search-box" id="search_form">
+                {% if sport_filter != 'ALL' %}
+                <input type="hidden" name="sport" value="{{ sport_filter }}">
+                {% endif %}
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" class="premium-input" placeholder="Buscar equipo..." value="{{ search_query }}" id="search_input" autocomplete="off">
+            </form>
+        </div>
+
+        <!-- Matches list -->
+        <div class="matches-grid" id="matches_grid">
+            {% for match in matches %}
+            <article class="match-card {% if match.sport == 'FB' %}football{% else %}basketball{% endif %}" id="match_card_{{ match.id }}">
+                <div class="match-header">
+                    <span class="sport-tag">
+                        {% if match.sport == 'FB' %}
+                        <i class="fa-solid fa-futbol"></i> Fútbol
+                        {% else %}
+                        <i class="fa-solid fa-basketball"></i> Básquet
+                        {% endif %}
+                    </span>
+                    <span class="match-date" id="match_date_{{ match.id }}"><i class="fa-regular fa-calendar"></i> {{ match.date|date:"d M Y" }}</span>
+                </div>
+                
+                <div class="scoreboard">
+                    <div class="team-column home">
+                        <a href="{% url 'team_detail' match.home_team %}" class="team-link" title="{{ match.home_team }}" id="match_{{ match.id }}_home_team">{{ match.home_team }}</a>
+                        <span class="team-label">Local</span>
+                    </div>
+                    
+                    <div class="score-display" id="match_{{ match.id }}_score">{{ match.home_score }} - {{ match.away_score }}</div>
+                    
+                    <div class="team-column away">
+                        <a href="{% url 'team_detail' match.away_team %}" class="team-link" title="{{ match.away_team }}" id="match_{{ match.id }}_away_team">{{ match.away_team }}</a>
+                        <span class="team-label">Visitante</span>
+                    </div>
+                </div>
+                
+                {% if user.is_staff %}
+                <div class="match-footer">
+                    <a href="{% url 'delete_match' match.id %}?confirm=yes" 
+                       class="btn-delete" 
+                       onclick="return confirm('¿Estás seguro de que deseas eliminar este partido de forma permanente?');"
+                       title="Eliminar partido"
+                       id="btn_delete_{{ match.id }}">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </a>
+                </div>
+                {% endif %}
+            </article>
+            {% empty %}
+            <div class="glass-card empty-state" id="empty_matches_state">
+                <i class="fa-regular fa-folder-open"></i>
+                <p>No se encontraron partidos registrados</p>
+                <span>Prueba registrando un nuevo partido o limpia los filtros.</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<!-- Modal Overlay with Registration Form -->
+<div class="modal-overlay {% if form.errors %}active{% endif %}" id="match_modal_overlay">
+    <!-- Modal Card -->
+    <div class="glass-card modal-card" id="match_modal_card">
+        <div class="modal-header">
+            <h2 class="card-title" style="margin-bottom: 0;">
+                <i class="fa-solid fa-circle-plus" style="color: var(--accent);"></i> Registrar Partido
+            </h2>
+            <button class="btn-close-modal" id="btn_close_modal" type="button" aria-label="Cerrar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form method="POST" id="match_form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.sport.id_for_label }}" class="form-label">Deporte</label>
+                {{ form.sport }}
+            </div>
+            
+            <div class="form-row">
+                <div class="team-col-group">
+                    <div class="form-group">
+                        <label for="{{ form.home_team.id_for_label }}" class="form-label">Equipo Local</label>
+                        {{ form.home_team }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.home_score.id_for_label }}" class="form-label">Resultado Local</label>
+                        {{ form.home_score }}
+                    </div>
+                </div>
+                <div class="team-col-group">
+                    <div class="form-group">
+                        <label for="{{ form.away_team.id_for_label }}" class="form-label">Equipo Visitante</label>
+                        {{ form.away_team }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.away_score.id_for_label }}" class="form-label">Resultado Visitante</label>
+                        {{ form.away_score }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.date.id_for_label }}" class="form-label">Fecha del Partido</label>
+                {{ form.date }}
+            </div>
+            
+            <button type="submit" class="btn-submit" id="btn_save_match">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Partido
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Control JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnOpen = document.getElementById('btn_open_modal');
+        const btnClose = document.getElementById('btn_close_modal');
+        const overlay = document.getElementById('match_modal_overlay');
+
+        if (btnOpen && overlay) {
+            btnOpen.addEventListener('click', () => {
+                overlay.classList.add('active');
+            });
+        }
+
+        if (btnClose && overlay) {
+            btnClose.addEventListener('click', () => {
+                overlay.classList.remove('active');
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

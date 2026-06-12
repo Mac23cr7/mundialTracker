@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestor de partidos de fútbol y básquetbol con estadísticas interactivas.">
+    <title>{% block title %}Sports Tracker | Gestor de Partidos{% endblock %}</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'tracker/css/styles.css' %}">
+</head>
+<body>
+    <!-- Premium Navigation Bar -->
+    <nav class="navbar" id="main_navbar">
+        <div class="navbar-container">
+            <a href="{% url 'mundial_dashboard' %}" class="navbar-brand" id="nav_brand">
+                <i class="fa-solid fa-ranking-star"></i> MundialTracker
+            </a>
+            <div class="nav-links" style="display: flex; align-items: center; gap: 1rem;">
+                <a href="{% url 'mundial_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'mundial_dashboard' %}active{% endif %}" id="nav_link_mundial">
+                    <i class="fa-solid fa-earth-americas"></i> Mundial
+                </a>
+                <span style="width: 1px; height: 20px; background: rgba(255, 255, 255, 0.15); margin: 0 0.25rem;"></span>
+                {% if user.is_authenticated and user.is_staff %}
+                <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.35rem 0.75rem; border-radius: 8px;" id="nav_user_badge">
+                    <i class="fa-solid fa-user-shield" style="color: var(--accent);"></i>
+                    {{ user.username }}
+                </span>
+                <a href="{% url 'logout' %}" class="nav-link" id="nav_link_logout" style="color: var(--danger); font-weight: 600;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Salir
+                </a>
+                {% else %}
+                <a href="/admin/" class="nav-link" id="nav_link_login" style="font-weight: 600;">
+                    <i class="fa-solid fa-lock"></i> Iniciar Sesión (Admin)
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Message Notification System -->
+        {% if messages %}
+        <div class="messages-container" id="messages_container">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}{{ message.tags }}{% endif %}" id="msg_{{ forloop.counter }}">
+                {% if message.tags == 'success' %}
+                <i class="fa-solid fa-circle-check"></i>
+                {% elif message.tags == 'error' %}
+                <i class="fa-solid fa-circle-exclamation"></i>
+                {% else %}
+                <i class="fa-solid fa-circle-info"></i>
+                {% endif %}
+                <span>{{ message.message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Content Block -->
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Auto-hide notifications after 5 seconds -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('messages_container');
+            if (container) {
+                setTimeout(() => {
+                    container.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                    container.style.opacity = '0';
+                    container.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        container.remove();
+                    }, 500);
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

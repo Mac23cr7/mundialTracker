@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "sports_tracker/wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "sports_tracker/wsgi.py"
+    }
+  ]
+}

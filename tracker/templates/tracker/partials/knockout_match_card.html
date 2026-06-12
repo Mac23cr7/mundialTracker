@@ -1,0 +1,92 @@
+<div class="glass-card match-card" style="min-height: 160px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border-radius: 16px; overflow: hidden; padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-color); transition: var(--transition-smooth); {% if is_final_card %}border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 10px 25px rgba(245, 158, 11, 0.15);{% endif %}" id="ko_match_card_{{ match.id }}">
+    
+    <!-- Top accent bar -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: {% if is_final_card %}var(--bk-gradient){% else %}var(--accent-gradient){% endif %};"></div>
+    
+    <!-- Header with label & played status -->
+    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+        <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: {% if is_final_card %}#fbbf24{% else %}var(--text-secondary){% endif %};">
+            {{ match_label }}{% if not is_final_card %}{{ match.match_number }}{% endif %}
+        </span>
+        {% if match.played %}
+        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 4px;">
+            JUGADO
+        </span>
+        {% else %}
+        <span>PENDIENTE</span>
+        {% endif %}
+    </div>
+
+    <!-- Match Teams and Scores -->
+    <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.75rem;">
+        
+        <!-- Home Team Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0;">
+                {% if match.home_team %}
+                <span style="font-size: 1.2rem;">{{ match.home_team.flag }}</span>
+                <span style="font-weight: {% if match.winner == match.home_team %}800{% else %}600{% endif %}; color: {% if match.winner == match.home_team %}#34d399{% else %}var(--text-primary){% endif %}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    {{ match.home_team.name }}
+                </span>
+                {% else %}
+                <span style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">
+                    {{ match.home_source_label }}
+                </span>
+                {% endif %}
+            </div>
+            
+            {% if match.played %}
+            <div style="font-weight: 800; font-size: 1.1rem; color: {% if match.winner == match.home_team %}#34d399{% else %}var(--text-secondary){% endif %};">
+                {{ match.home_score }}
+                {% if match.home_penalties is not None %}
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-left: 0.25rem;">({{ match.home_penalties }} Pen)</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Away Team Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0;">
+                {% if match.away_team %}
+                <span style="font-size: 1.2rem;">{{ match.away_team.flag }}</span>
+                <span style="font-weight: {% if match.winner == match.away_team %}800{% else %}600{% endif %}; color: {% if match.winner == match.away_team %}#34d399{% else %}var(--text-primary){% endif %}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    {{ match.away_team.name }}
+                </span>
+                {% else %}
+                <span style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">
+                    {{ match.away_source_label }}
+                </span>
+                {% endif %}
+            </div>
+            
+            {% if match.played %}
+            <div style="font-weight: 800; font-size: 1.1rem; color: {% if match.winner == match.away_team %}#34d399{% else %}var(--text-secondary){% endif %};">
+                {{ match.away_score }}
+                {% if match.away_penalties is not None %}
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-left: 0.25rem;">({{ match.away_penalties }} Pen)</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Admin controls footer -->
+    {% if user.is_staff %}
+    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.5rem; margin-top: 0.25rem;">
+        {% if match.home_team and match.away_team %}
+        <button class="btn-action" title="Registrar Resultado" onclick="openKnockoutScoreModal('{{ match.id }}', '{{ match.home_team.name|escapejs }}', '{{ match.away_team.name|escapejs }}', '{{ match.home_score }}', '{{ match.away_score }}', '{% if match.home_penalties is not None %}{{ match.home_penalties }}{% endif %}', '{% if match.away_penalties is not None %}{{ match.away_penalties }}{% endif %}')" type="button" style="padding: 0.2rem 0.5rem;">
+            <i class="fa-solid fa-pen-to-square" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> {% if match.played %}Editar{% else %}Jugar{% endif %}
+        </button>
+        {% endif %}
+        
+        {% if match.played %}
+        <a href="{% url 'reset_knockout_match' match.id %}" class="btn-delete" title="Borrar Marcador" onclick="return confirm('¿Deseas eliminar el resultado de este partido? Se resetearán los avances consiguientes en el bracket.');" style="padding: 0.2rem 0.5rem;">
+            <i class="fa-solid fa-arrow-rotate-left" style="font-size: 0.85rem;"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>

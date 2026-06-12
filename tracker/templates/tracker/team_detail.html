@@ -1,0 +1,162 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Rendimiento de {{ team_name }} | Sports Tracker{% endblock %}
+
+{% block content %}
+<!-- Back to Dashboard Link -->
+<a href="{% url 'dashboard' %}" class="btn-back" id="btn_back_to_dashboard">
+    <i class="fa-solid fa-arrow-left-long"></i> Volver al Dashboard
+</a>
+
+<!-- Team Profile Header -->
+<header class="team-header-card" id="team_header">
+    <div class="team-info">
+        <div class="team-avatar" id="team_avatar_initial">
+            {{ team_name|slice:":1"|upper }}
+        </div>
+        <div>
+            <span class="team-title-label">Estadísticas del Equipo</span>
+            <h1 class="team-name-title" id="team_name_title">{{ team_name }}</h1>
+        </div>
+    </div>
+    <div class="team-win-badge" id="team_win_badge">
+        <i class="fa-solid fa-fire"></i>
+        <span>Efectividad: {{ win_rate }}%</span>
+    </div>
+</header>
+
+<!-- Performance Analysis (Local vs Visitante) -->
+<section class="grid-performance" id="performance_stats">
+    <!-- Local Performance Card -->
+    <div class="glass-card performance-card" id="perf_local">
+        <h3 class="card-title">
+            <i class="fa-solid fa-house" style="color: var(--fb-primary);"></i> Como Local
+        </h3>
+        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+            Partidos Jugados: <strong style="color: var(--text-primary);">{{ home_played }}</strong>
+        </p>
+        
+        {% if home_played > 0 %}
+        <!-- Segmented Progress Bar -->
+        <div class="perf-bar-container">
+            <div class="perf-bar win" style="width: calc(({{ home_wins }} / {{ home_played }}) * 100%);"></div>
+            <div class="perf-bar draw" style="width: calc(({{ home_draws }} / {{ home_played }}) * 100%);"></div>
+            <div class="perf-bar loss" style="width: calc(({{ home_losses }} / {{ home_played }}) * 100%);"></div>
+        </div>
+        <div class="perf-legend">
+            <span><span class="perf-dot win"></span> {{ home_wins }} Victorias</span>
+            <span><span class="perf-dot draw"></span> {{ home_draws }} Empates</span>
+            <span><span class="perf-dot loss"></span> {{ home_losses }} Derrotas</span>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">No ha jugado ningún partido como local todavía.</p>
+        {% endif %}
+    </div>
+
+    <!-- Away Performance Card -->
+    <div class="glass-card performance-card" id="perf_away">
+        <h3 class="card-title">
+            <i class="fa-solid fa-plane" style="color: var(--bk-primary);"></i> Como Visitante
+        </h3>
+        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+            Partidos Jugados: <strong style="color: var(--text-primary);">{{ away_played }}</strong>
+        </p>
+
+        {% if away_played > 0 %}
+        <!-- Segmented Progress Bar -->
+        <div class="perf-bar-container">
+            <div class="perf-bar win" style="width: calc(({{ away_wins }} / {{ away_played }}) * 100%);"></div>
+            <div class="perf-bar draw" style="width: calc(({{ away_draws }} / {{ away_played }}) * 100%);"></div>
+            <div class="perf-bar loss" style="width: calc(({{ away_losses }} / {{ away_played }}) * 100%);"></div>
+        </div>
+        <div class="perf-legend">
+            <span><span class="perf-dot win"></span> {{ away_wins }} Victorias</span>
+            <span><span class="perf-dot draw"></span> {{ away_draws }} Empates</span>
+            <span><span class="perf-dot loss"></span> {{ away_losses }} Derrotas</span>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">No ha jugado ningún partido como visitante todavía.</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Match History List -->
+<section>
+    <h2 class="card-title" style="margin-bottom: 1.5rem;" id="history_title">
+        <i class="fa-solid fa-clock-rotate-left" style="color: var(--accent);"></i> Historial de Partidos
+    </h2>
+    <div class="matches-grid" id="team_matches_grid">
+        {% for match in matches %}
+        <article class="match-card {% if match.sport == 'FB' %}football{% else %}basketball{% endif %}" id="match_card_{{ match.id }}">
+            <div class="match-header">
+                <span class="sport-tag">
+                    {% if match.sport == 'FB' %}
+                    <i class="fa-solid fa-futbol"></i> Fútbol
+                    {% else %}
+                    <i class="fa-solid fa-basketball"></i> Básquet
+                    {% endif %}
+                </span>
+                
+                <!-- Display if Local or Visitante in this match -->
+                {% if match.home_team.lower == team_name.lower %}
+                <span class="sport-tag" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <i class="fa-solid fa-house"></i> Local
+                </span>
+                {% else %}
+                <span class="sport-tag" style="background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3);">
+                    <i class="fa-solid fa-plane"></i> Visitante
+                </span>
+                {% endif %}
+                
+                <span class="match-date" id="match_date_{{ match.id }}"><i class="fa-regular fa-calendar"></i> {{ match.date|date:"d M Y" }}</span>
+            </div>
+            
+            <div class="scoreboard">
+                <div class="team-column home">
+                    {% if match.home_team.lower == team_name.lower %}
+                    <span class="team-link" style="color: var(--accent); font-weight: 700;">{{ match.home_team }}</span>
+                    {% else %}
+                    <a href="{% url 'team_detail' match.home_team %}" class="team-link">{{ match.home_team }}</a>
+                    {% endif %}
+                    <span class="team-label">Local</span>
+                </div>
+                
+                <div class="score-display" id="match_{{ match.id }}_score">{{ match.home_score }} - {{ match.away_score }}</div>
+                
+                <div class="team-column away">
+                    {% if match.away_team.lower == team_name.lower %}
+                    <span class="team-link" style="color: var(--accent); font-weight: 700;">{{ match.away_team }}</span>
+                    {% else %}
+                    <a href="{% url 'team_detail' match.away_team %}" class="team-link">{{ match.away_team }}</a>
+                    {% endif %}
+                    <span class="team-label">Visitante</span>
+                </div>
+            </div>
+            
+            <!-- Result Highlight -->
+            <div class="match-footer" style="justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                    {% if match.home_score == match.away_score %}
+                    <i class="fa-solid fa-circle-minus" style="color: var(--text-muted);"></i>
+                    <span style="color: var(--text-secondary);">Empate</span>
+                    {% elif match.home_team.lower == team_name.lower and match.home_score > match.away_score or match.away_team.lower == team_name.lower and match.away_score > match.home_score %}
+                    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+                    <span style="color: var(--success);">Victoria</span>
+                    {% else %}
+                    <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i>
+                    <span style="color: var(--danger);">Derrota</span>
+                    {% endif %}
+                </span>
+                <a href="{% url 'delete_match' match.id %}?confirm=yes" 
+                   class="btn-delete" 
+                   onclick="return confirm('¿Estás seguro de que deseas eliminar este partido de forma permanente?');"
+                   title="Eliminar partido"
+                   id="btn_delete_{{ match.id }}">
+                    <i class="fa-regular fa-trash-can"></i>
+                </a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
