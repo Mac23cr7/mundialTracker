@@ -71,18 +71,18 @@
         </div>
 
         <!-- Standings Table -->
-        <div style="overflow-x: auto; width: 100%;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+        <div style="overflow-x: auto; width: 100%; min-width: 0; -webkit-overflow-scrolling: touch;">
+            <table style="width: 100%; min-width: 550px; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
                 <thead>
                     <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); font-weight: 600;">
                         <th style="padding: 0.75rem 0.5rem; width: 40px; text-align: center;">Pos</th>
                         <th class="team-col" style="padding: 0.75rem 0.5rem;">Equipo</th>
                         <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">PJ</th>
-                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">G</th>
-                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">E</th>
-                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">P</th>
-                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GF</th>
-                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GC</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">G</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">E</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">P</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GF</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GC</th>
                         <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">DG</th>
                         <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px; font-weight: 700;">Pts</th>
                     </tr>
@@ -102,11 +102,11 @@
                             </div>
                         </td>
                         <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.games_played }}</td>
-                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.wins }}</td>
-                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.draws }}</td>
-                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.losses }}</td>
-                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_for }}</td>
-                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_against }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.wins }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.draws }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.losses }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_for }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_against }}</td>
                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; {% if team.goal_difference > 0 %}color: #34d399;{% elif team.goal_difference < 0 %}color: #f87171;{% endif %}">
                             {% if team.goal_difference > 0 %}+{% endif %}{{ team.goal_difference }}
                         </td>
@@ -288,17 +288,17 @@
                 <!-- Best Thirds Card -->
                 <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem;">
                     <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0;">Tabla de Mejores Terceros</h3>
-                    <div style="overflow-x: auto; width: 100%;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                    <div style="overflow-x: auto; width: 100%; min-width: 0; -webkit-overflow-scrolling: touch;">
+                        <table style="width: 100%; min-width: 450px; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
                             <thead>
                                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary);">
                                     <th style="padding: 0.5rem; text-align: center;">Pos</th>
                                     <th style="padding: 0.5rem;">Grupo</th>
                                     <th class="team-col" style="padding: 0.5rem;">Equipo</th>
-                                    <th class="hide-mobile" style="padding: 0.5rem; text-align: center;">PJ</th>
+                                    <th style="padding: 0.5rem; text-align: center;">PJ</th>
                                     <th style="padding: 0.5rem; text-align: center;">Pts</th>
                                     <th style="padding: 0.5rem; text-align: center;">DG</th>
-                                    <th class="hide-mobile" style="padding: 0.5rem; text-align: center;">GF</th>
+                                    <th style="padding: 0.5rem; text-align: center;">GF</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -312,10 +312,10 @@
                                             <span class="team-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ team.name }}</span>
                                         </div>
                                     </td>
-                                    <td class="hide-mobile" style="padding: 0.5rem; text-align: center;">{{ team.games_played }}</td>
+                                    <td style="padding: 0.5rem; text-align: center;">{{ team.games_played }}</td>
                                     <td style="padding: 0.5rem; text-align: center; font-weight: 700;">{{ team.points }}</td>
                                     <td style="padding: 0.5rem; text-align: center;">{{ team.goal_difference }}</td>
-                                    <td class="hide-mobile" style="padding: 0.5rem; text-align: center;">{{ team.goals_for }}</td>
+                                    <td style="padding: 0.5rem; text-align: center;">{{ team.goals_for }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
