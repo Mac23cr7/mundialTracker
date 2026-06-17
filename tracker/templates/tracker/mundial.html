@@ -76,13 +76,13 @@
                 <thead>
                     <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); font-weight: 600;">
                         <th style="padding: 0.75rem 0.5rem; width: 40px; text-align: center;">Pos</th>
-                        <th style="padding: 0.75rem 0.5rem; min-width: 150px;">Equipo</th>
+                        <th class="team-col" style="padding: 0.75rem 0.5rem;">Equipo</th>
                         <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">PJ</th>
-                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">G</th>
-                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">E</th>
-                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">P</th>
-                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GF</th>
-                        <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GC</th>
+                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">G</th>
+                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">E</th>
+                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 40px;">P</th>
+                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GF</th>
+                        <th class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">GC</th>
                         <th style="padding: 0.75rem 0.5rem; text-align: center; width: 45px;">DG</th>
                         <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px; font-weight: 700;">Pts</th>
                     </tr>
@@ -95,16 +95,18 @@
                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--text-secondary);">
                             {{ forloop.counter }}
                         </td>
-                        <td style="padding: 0.75rem 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="font-size: 1.25rem;">{{ team.flag }}</span>
-                            <span>{{ team.name }}</span>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.25rem; flex-shrink: 0;">{{ team.flag }}</span>
+                                <span class="team-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ team.name }}</span>
+                            </div>
                         </td>
                         <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.games_played }}</td>
-                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.wins }}</td>
-                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.draws }}</td>
-                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.losses }}</td>
-                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_for }}</td>
-                        <td style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_against }}</td>
+                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.wins }}</td>
+                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.draws }}</td>
+                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.losses }}</td>
+                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_for }}</td>
+                        <td class="hide-mobile" style="padding: 0.75rem 0.5rem; text-align: center;">{{ team.goals_against }}</td>
                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; {% if team.goal_difference > 0 %}color: #34d399;{% elif team.goal_difference < 0 %}color: #f87171;{% endif %}">
                             {% if team.goal_difference > 0 %}+{% endif %}{{ team.goal_difference }}
                         </td>
@@ -228,7 +230,7 @@
     <!-- Knockout Match Grid Lists -->
     <!-- Round of 32 -->
     <div class="ko-round-pane active" id="pane_R32" style="animation: fadeIn 0.4s ease-out;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem;">
             {% for m in r32_matches %}
                 {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Dieciseisavos - M" %}
             {% endfor %}
@@ -237,7 +239,7 @@
 
     <!-- Round of 16 -->
     <div class="ko-round-pane" id="pane_R16" style="display: none; animation: fadeIn 0.4s ease-out;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem;">
             {% for m in r16_matches %}
                 {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Octavos - M" %}
             {% endfor %}
@@ -246,7 +248,7 @@
 
     <!-- Quarter Finals -->
     <div class="ko-round-pane" id="pane_QF" style="display: none; animation: fadeIn 0.4s ease-out;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem;">
             {% for m in qf_matches %}
                 {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Cuartos - M" %}
             {% endfor %}
@@ -255,7 +257,7 @@
 
     <!-- Semifinals -->
     <div class="ko-round-pane" id="pane_SF" style="display: none; animation: fadeIn 0.4s ease-out;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.25rem;">
             {% for m in sf_matches %}
                 {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Semifinal " %}
             {% endfor %}
@@ -292,11 +294,11 @@
                                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary);">
                                     <th style="padding: 0.5rem; text-align: center;">Pos</th>
                                     <th style="padding: 0.5rem;">Grupo</th>
-                                    <th style="padding: 0.5rem;">Equipo</th>
-                                    <th style="padding: 0.5rem; text-align: center;">PJ</th>
+                                    <th class="team-col" style="padding: 0.5rem;">Equipo</th>
+                                    <th class="hide-mobile" style="padding: 0.5rem; text-align: center;">PJ</th>
                                     <th style="padding: 0.5rem; text-align: center;">Pts</th>
                                     <th style="padding: 0.5rem; text-align: center;">DG</th>
-                                    <th style="padding: 0.5rem; text-align: center;">GF</th>
+                                    <th class="hide-mobile" style="padding: 0.5rem; text-align: center;">GF</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -304,11 +306,16 @@
                                 <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);" {% if team.is_qualified_third %}class="qualified-row" style="border-left: 2px solid var(--success) !important; background: rgba(16, 185, 129, 0.02) !important;"{% endif %}>
                                     <td style="padding: 0.5rem; text-align: center;">{{ forloop.counter }}</td>
                                     <td style="padding: 0.5rem; color: var(--accent); font-weight: 600;">{{ team.group.name|slice:"6:" }}</td>
-                                    <td style="padding: 0.5rem; font-weight: 600;">{{ team.flag }} {{ team.name }}</td>
-                                    <td style="padding: 0.5rem; text-align: center;">{{ team.games_played }}</td>
+                                    <td style="padding: 0.5rem; font-weight: 600;">
+                                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                            <span style="font-size: 1.15rem; flex-shrink: 0;">{{ team.flag }}</span>
+                                            <span class="team-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ team.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="hide-mobile" style="padding: 0.5rem; text-align: center;">{{ team.games_played }}</td>
                                     <td style="padding: 0.5rem; text-align: center; font-weight: 700;">{{ team.points }}</td>
                                     <td style="padding: 0.5rem; text-align: center;">{{ team.goal_difference }}</td>
-                                    <td style="padding: 0.5rem; text-align: center;">{{ team.goals_for }}</td>
+                                    <td class="hide-mobile" style="padding: 0.5rem; text-align: center;">{{ team.goals_for }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

@@ -1195,6 +1195,10 @@ table tr:hover {
     }
 }
 
+.team-col {
+    min-width: 150px;
+}
+
 /* Tables padding & font size on mobile */
 @media (max-width: 600px) {
     table th, table td {
@@ -1203,6 +1207,15 @@ table tr:hover {
     }
     .qualified-row {
         border-left-width: 2px !important;
+    }
+    .hide-mobile {
+        display: none !important;
+    }
+    .team-col {
+        min-width: 100px !important;
+    }
+    .glass-card, .match-card {
+        padding: 1rem !important;
     }
 }
 
