@@ -4,7 +4,7 @@
 
 {% block content %}
 <!-- Header and Controls -->
-<header class="controls-container" id="mundial_header" style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<header class="controls-container" id="mundial_header" style="margin-bottom: 2rem;">
     <div>
         <h1 style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #ffffff, #9ca3af); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             <i class="fa-solid fa-earth-americas" style="color: var(--accent); margin-right: 0.5rem;"></i> Mundial 2026
@@ -49,7 +49,7 @@
 <!-- Tab 1: Groups Grid -->
 {% if groups_data %}
 <div class="tab-content active" id="groups-tab">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); gap: 2rem;" id="groups_grid">
+    <div class="groups-grid" id="groups_grid">
     {% for gd in groups_data %}
     <div class="glass-card" style="display: flex; flex-direction: column; gap: 1.5rem;" id="group_card_{{ gd.group.id }}">
         
@@ -123,31 +123,31 @@
             
             <div style="display: flex; flex-direction: column; gap: 0.5rem;" id="group_{{ gd.group.id }}_matches">
                 {% for m in gd.matches %}
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem;" id="group_match_{{ m.id }}">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; justify-content: flex-end; text-align: right;">
-                        <span style="font-weight: 600;">{{ m.home_team.name }}</span>
-                        <span style="font-size: 1.1rem;">{{ m.home_team.flag }}</span>
+                <div class="group-match-card" id="group_match_{{ m.id }}">
+                    <div class="group-match-team home">
+                        <span class="team-name">{{ m.home_team.name }}</span>
+                        <span class="team-flag">{{ m.home_team.flag }}</span>
                     </div>
                     
                     {% if m.played %}
-                    <div style="font-weight: 800; font-size: 1rem; padding: 0 1rem; min-width: 100px; text-align: center; color: var(--text-primary);">
-                        {{ m.home_score }} - {{ m.away_score }}
-                        <div style="font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-top: 0.1rem;">{{ m.date|date:"d/m/Y" }}</div>
+                    <div class="group-match-score">
+                        <span class="score-text">{{ m.home_score }} - {{ m.away_score }}</span>
+                        <div class="match-time">{{ m.date|date:"d/m/Y" }}</div>
                     </div>
                     {% else %}
-                    <div style="font-weight: 600; font-size: 0.85rem; padding: 0 1rem; min-width: 100px; text-align: center; color: var(--text-secondary);">
-                        vs
-                        <div style="font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-top: 0.1rem;">{{ m.date|date:"d/m/Y" }}</div>
+                    <div class="group-match-score" style="color: var(--text-secondary); font-weight: 600; font-size: 0.85rem;">
+                        <span class="score-text">vs</span>
+                        <div class="match-time">{{ m.date|date:"d/m/Y" }}</div>
                     </div>
                     {% endif %}
                     
-                    <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; justify-content: flex-start; text-align: left;">
-                        <span style="font-size: 1.1rem;">{{ m.away_team.flag }}</span>
-                        <span style="font-weight: 600;">{{ m.away_team.name }}</span>
+                    <div class="group-match-team away">
+                        <span class="team-flag">{{ m.away_team.flag }}</span>
+                        <span class="team-name">{{ m.away_team.name }}</span>
                     </div>
                     
                     <!-- Admin modification actions -->
-                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                    <div class="group-match-actions">
                         {% if user.is_staff %}
                         <button class="btn-action" title="Registrar/Editar Resultado" onclick="openUpdateScoreModal('{{ m.id }}', '{{ m.home_team.name|escapejs }}', '{{ m.away_team.name|escapejs }}', '{{ m.home_score }}', '{{ m.away_score }}')" type="button">
                             <i class="fa-solid fa-pen-to-square" style="font-size: 0.85rem;"></i>
@@ -207,20 +207,20 @@
     </div>
 
     <!-- Knockout Round Navigation Pills -->
-    <div class="round-nav" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; background: rgba(255, 255, 255, 0.02); padding: 0.35rem; border-radius: 12px; border: 1px solid var(--border-color);">
-        <button class="filter-btn active" onclick="switchKORound('R32')" id="btn_ko_R32" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+    <div class="bracket-nav" id="bracket_round_nav">
+        <button class="filter-btn active" onclick="switchKORound('R32')" id="btn_ko_R32" style="cursor: pointer; text-align: center;">
             Dieciseisavos (16)
         </button>
-        <button class="filter-btn" onclick="switchKORound('R16')" id="btn_ko_R16" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+        <button class="filter-btn" onclick="switchKORound('R16')" id="btn_ko_R16" style="cursor: pointer; text-align: center;">
             Octavos (8)
         </button>
-        <button class="filter-btn" onclick="switchKORound('QF')" id="btn_ko_QF" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+        <button class="filter-btn" onclick="switchKORound('QF')" id="btn_ko_QF" style="cursor: pointer; text-align: center;">
             Cuartos (4)
         </button>
-        <button class="filter-btn" onclick="switchKORound('SF')" id="btn_ko_SF" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+        <button class="filter-btn" onclick="switchKORound('SF')" id="btn_ko_SF" style="cursor: pointer; text-align: center;">
             Semifinales (2)
         </button>
-        <button class="filter-btn" onclick="switchKORound('F')" id="btn_ko_F" style="flex: 1; min-width: 120px; cursor: pointer; text-align: center;">
+        <button class="filter-btn" onclick="switchKORound('F')" id="btn_ko_F" style="cursor: pointer; text-align: center;">
             Gran Final (1)
         </button>
     </div>
@@ -281,7 +281,7 @@
         </button>
         
         <div id="thirds_drawer" style="display: none; margin-top: 1.5rem; animation: fadeIn 0.3s ease-out;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+            <div class="thirds-grid">
                 
                 <!-- Best Thirds Card -->
                 <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem;">

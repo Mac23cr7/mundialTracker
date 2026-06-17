@@ -24,20 +24,20 @@
             </a>
             <div class="nav-links" style="display: flex; align-items: center; gap: 1rem;">
                 <a href="{% url 'mundial_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'mundial_dashboard' %}active{% endif %}" id="nav_link_mundial">
-                    <i class="fa-solid fa-earth-americas"></i> Mundial
+                    <i class="fa-solid fa-earth-americas"></i> <span class="nav-link-text">Mundial</span>
                 </a>
                 <span style="width: 1px; height: 20px; background: rgba(255, 255, 255, 0.15); margin: 0 0.25rem;"></span>
                 {% if user.is_authenticated and user.is_staff %}
                 <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.35rem 0.75rem; border-radius: 8px;" id="nav_user_badge">
                     <i class="fa-solid fa-user-shield" style="color: var(--accent);"></i>
-                    {{ user.username }}
+                    <span class="nav-link-text">{{ user.username }}</span>
                 </span>
                 <a href="{% url 'logout' %}" class="nav-link" id="nav_link_logout" style="color: var(--danger); font-weight: 600;">
-                    <i class="fa-solid fa-right-from-bracket"></i> Salir
+                    <i class="fa-solid fa-right-from-bracket"></i> <span class="nav-link-text">Salir</span>
                 </a>
                 {% else %}
                 <a href="/admin/" class="nav-link" id="nav_link_login" style="font-weight: 600;">
-                    <i class="fa-solid fa-lock"></i> Iniciar Sesión (Admin)
+                    <i class="fa-solid fa-lock"></i> <span class="nav-link-text">Iniciar Sesión (Admin)</span>
                 </a>
                 {% endif %}
             </div>
