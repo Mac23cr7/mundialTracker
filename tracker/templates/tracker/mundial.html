@@ -222,6 +222,9 @@
         <button class="filter-btn" onclick="switchKORound('SF')" id="btn_ko_SF" style="cursor: pointer; text-align: center;">
             Semifinales (2)
         </button>
+        <button class="filter-btn" onclick="switchKORound('TP')" id="btn_ko_TP" style="cursor: pointer; text-align: center;">
+            Tercer Puesto (1)
+        </button>
         <button class="filter-btn" onclick="switchKORound('F')" id="btn_ko_F" style="cursor: pointer; text-align: center;">
             Gran Final (1)
         </button>
@@ -261,6 +264,17 @@
             {% for m in sf_matches %}
                 {% include 'tracker/partials/knockout_match_card.html' with match=m match_label="Semifinal " %}
             {% endfor %}
+        </div>
+    </div>
+
+    <!-- Third Place -->
+    <div class="ko-round-pane" id="pane_TP" style="display: none; animation: fadeIn 0.4s ease-out; padding: 1.5rem 0;">
+        <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+            <div style="width: 100%; max-width: 440px;">
+                {% if tp_match %}
+                    {% include 'tracker/partials/knockout_match_card.html' with match=tp_match match_label="Tercer Puesto" %}
+                {% endif %}
+            </div>
         </div>
     </div>
 
