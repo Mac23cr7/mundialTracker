@@ -190,6 +190,7 @@ class KnockoutMatch(models.Model):
         ('R16', 'Octavos de Final'),
         ('QF', 'Cuartos de Final'),
         ('SF', 'Semifinales'),
+        ('TP', 'Tercer Puesto'),
         ('F', 'Final'),
     ]
 
@@ -251,8 +252,10 @@ class KnockoutMatch(models.Model):
         
         if self.played and self.winner:
             self.propagate_winner()
+            self.propagate_loser()
         else:
             self.clear_from_next_round()
+            self.clear_loser_from_third_place()
 
     def propagate_winner(self):
         next_round_map = {
@@ -281,6 +284,40 @@ class KnockoutMatch(models.Model):
             else:
                 next_match.away_team = self.winner
             
+            next_match.home_score = 0
+            next_match.away_score = 0
+            next_match.home_penalties = None
+            next_match.away_penalties = None
+            next_match.winner = None
+            next_match.played = False
+            next_match.save()
+
+    def propagate_loser(self):
+        loser_round_map = {
+            'SF': 'TP',
+        }
+        if self.round not in loser_round_map:
+            return
+
+        next_match_number = 1
+        is_home = (self.match_number == 1)
+        loser = self.away_team if self.winner == self.home_team else self.home_team
+
+        if loser is None:
+            return
+
+        next_match, created = KnockoutMatch.objects.get_or_create(
+            round=loser_round_map[self.round],
+            match_number=next_match_number
+        )
+
+        old_team = next_match.home_team if is_home else next_match.away_team
+        if old_team != loser:
+            if is_home:
+                next_match.home_team = loser
+            else:
+                next_match.away_team = loser
+
             next_match.home_score = 0
             next_match.away_score = 0
             next_match.home_penalties = None
@@ -325,6 +362,36 @@ class KnockoutMatch(models.Model):
         except KnockoutMatch.DoesNotExist:
             pass
 
+    def clear_loser_from_third_place(self):
+        loser_round_map = {
+            'SF': 'TP',
+        }
+        if self.round not in loser_round_map:
+            return
+
+        next_match_number = 1
+        is_home = (self.match_number == 1)
+
+        try:
+            next_match = KnockoutMatch.objects.get(
+                round=loser_round_map[self.round],
+                match_number=next_match_number
+            )
+            if is_home and next_match.home_team is not None:
+                next_match.home_team = None
+            elif not is_home and next_match.away_team is not None:
+                next_match.away_team = None
+
+            next_match.home_score = 0
+            next_match.away_score = 0
+            next_match.home_penalties = None
+            next_match.away_penalties = None
+            next_match.winner = None
+            next_match.played = False
+            next_match.save()
+        except KnockoutMatch.DoesNotExist:
+            pass
+
     @property
     def home_source_label(self):
         if self.round == 'R16':
@@ -333,6 +400,8 @@ class KnockoutMatch(models.Model):
             return f"Ganador Octavos M{(self.match_number * 2) - 1}"
         elif self.round == 'SF':
             return f"Ganador Cuartos M{(self.match_number * 2) - 1}"
+        elif self.round == 'TP':
+            return "Perdedor Semifinal 1"
         elif self.round == 'F':
             return f"Ganador Semifinal 1"
         return "Por definir"
@@ -345,6 +414,8 @@ class KnockoutMatch(models.Model):
             return f"Ganador Octavos M{self.match_number * 2}"
         elif self.round == 'SF':
             return f"Ganador Cuartos M{self.match_number * 2}"
+        elif self.round == 'TP':
+            return "Perdedor Semifinal 2"
         elif self.round == 'F':
             return f"Ganador Semifinal 2"
         return "Por definir"

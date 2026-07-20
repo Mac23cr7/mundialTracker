@@ -483,7 +483,31 @@ class WorldCupPermissionsAndKnockoutTest(TestCase):
         qf_m1.refresh_from_db()
         self.assertEqual(qf_m1.home_team, self.team_b)
         
-        # Now reset/change M1 R32 score to see cascade clearing!
+        # Now create two semifinal matches and play them to exercise third place propagation
+        sf1 = KnockoutMatch.objects.create(round='SF', match_number=1, played=False)
+        sf2 = KnockoutMatch.objects.create(round='SF', match_number=2, played=False)
+        
+        sf1.home_team = self.team_a
+        sf1.away_team = self.team_b
+        sf1.home_score = 2
+        sf1.away_score = 1
+        sf1.played = True
+        sf1.save()
+        
+        sf2.home_team = self.team_b
+        sf2.away_team = self.team_a
+        sf2.home_score = 1
+        sf2.away_score = 3
+        sf2.played = True
+        sf2.save()
+        
+        tp_match = KnockoutMatch.objects.get(round='TP', match_number=1)
+        self.assertIsNotNone(tp_match.home_team)
+        self.assertIsNotNone(tp_match.away_team)
+        self.assertEqual(tp_match.home_team, self.team_b)
+        self.assertEqual(tp_match.away_team, self.team_a)
+        
+        # Now reset M1 R32 score to see cascade clearing!
         m1_r32.played = False
         m1_r32.save()
         

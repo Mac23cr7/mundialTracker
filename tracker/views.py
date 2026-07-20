@@ -219,6 +219,7 @@ def generate_knockout_bracket(direct_qualifiers, qualified_thirds):
         KnockoutMatch.objects.create(round='QF', match_number=m_num, played=False)
     for m_num in range(1, 3):
         KnockoutMatch.objects.create(round='SF', match_number=m_num, played=False)
+    KnockoutMatch.objects.create(round='TP', match_number=1, played=False)
     KnockoutMatch.objects.create(round='F', match_number=1, played=False)
 
 
@@ -300,6 +301,7 @@ def mundial_dashboard(request):
     r16_matches = ko_matches.filter(round='R16')
     qf_matches = ko_matches.filter(round='QF')
     sf_matches = ko_matches.filter(round='SF')
+    tp_match = ko_matches.filter(round='TP').first()
     final_match = ko_matches.filter(round='F').first()
     
     champion = None
@@ -320,6 +322,7 @@ def mundial_dashboard(request):
         'r16_matches': r16_matches,
         'qf_matches': qf_matches,
         'sf_matches': sf_matches,
+        'tp_match': tp_match,
         'final_match': final_match,
         'champion': champion,
         'group_form': GroupForm(),
